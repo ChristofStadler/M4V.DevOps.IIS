@@ -33,6 +33,7 @@ namespace M4V.DevOps.IIS
             // 2 - PULL LATEST
             return proj.Update() ? "Success" : "Failed";
         }
+
         public class Project
         {
             public string PathDEV { get; set; }
@@ -45,17 +46,12 @@ namespace M4V.DevOps.IIS
             public string GitPassword { get; set; }
             private UsernamePasswordCredentials GitCredentials { get; set; }
 
-            public Project()
-            {
-
-            }
-
             public bool Update()
             {
                 try
                 {
-                    // git checkout master
-                    // git checkout staging
+                    // git checkout live
+                    // git checkout dev
                     // git fetch
                     // git merge
                     GitCredentials = new UsernamePasswordCredentials { Username = GitUsername, Password = GitPassword };
@@ -65,6 +61,7 @@ namespace M4V.DevOps.IIS
                     {
                         var gitSignature = new Signature(GitUsername, GitEmail, DateTimeOffset.Now);
 
+                        // CHECKOUT
                         Branch branch = Commands.Checkout(repo, repo.Branches["master"]);
 
                         // FETCH
@@ -79,6 +76,7 @@ namespace M4V.DevOps.IIS
                     {
                         var gitSignature = new Signature(GitUsername, GitEmail, DateTimeOffset.Now);
 
+                        // CHECKOUT
                         Branch branch = Commands.Checkout(repo, repo.Branches["dev"]);
 
                         // FETCH
