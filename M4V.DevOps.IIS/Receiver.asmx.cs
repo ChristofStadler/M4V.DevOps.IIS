@@ -20,18 +20,18 @@ namespace M4V.DevOps.IIS
         [ScriptMethod(UseHttpGet = true)]
         public string Update(string key)
         {
-            Project proj = new Project();
-            proj.Key = key;
+            Project project = new Project();
+            project.Key = key;
 
             // 1 - GET REPO INFO
-            proj.GitEmail = ConfigurationManager.AppSettings["Git.Email"];
-            proj.GitPassword = ConfigurationManager.AppSettings["Git.Password"];
-            proj.GitUsername = ConfigurationManager.AppSettings["Git.Username"];
-            proj.PathDEV = ConfigurationManager.AppSettings[$"Project.{proj.Key}.DEV"];
-            proj.PathLIVE = ConfigurationManager.AppSettings[$"Project.{proj.Key}.LIVE"];
+            project.GitEmail = ConfigurationManager.AppSettings["Git.Email"];
+            project.GitPassword = ConfigurationManager.AppSettings["Git.Password"];
+            project.GitUsername = ConfigurationManager.AppSettings["Git.Username"];
+            project.PathDEV = ConfigurationManager.AppSettings[$"Project.{project.Key}.DEV"];
+            project.PathLIVE = ConfigurationManager.AppSettings[$"Project.{project.Key}.LIVE"];
 
             // 2 - PULL LATEST
-            return proj.Update() ? "Success" : "Failed";
+            return project.Update() ? "Success" : "Failed";
         }
 
         public class Project
@@ -39,7 +39,6 @@ namespace M4V.DevOps.IIS
             public string PathDEV { get; set; }
             public string PathLIVE { get; set; }
             public string Key { get; set; }
-            public string URL { get; set; }
 
             public string GitEmail { get; set; }
             public string GitUsername { get; set; }
