@@ -13,84 +13,60 @@ namespace M4V.DevOps.IIS
     [WebServiceBinding(ConformsTo = WsiProfiles.BasicProfile1_1)]
     [System.ComponentModel.ToolboxItem(false)]
     // To allow this Web Service to be called from script, using ASP.NET AJAX, uncomment the following line. 
-    // [System.Web.Script.Services.ScriptService]
+    [System.Web.Script.Services.ScriptService]
     public class Receiver : System.Web.Services.WebService
     {
         [WebMethod]
-        [ScriptMethod(UseHttpGet = true)]
-        public string Update(string key)
+        public string Update()
         {
+            string key = System.Web.HttpContext.Current.Request.QueryString["key"];
+
+            if (String.IsNullOrEmpty(key)) return "Failed";
+
             Project project = new Project();
             project.Key = key;
 
             // 1 - GET REPO INFO
             project.GitEmail = ConfigurationManager.AppSettings["Git.Email"];
-            project.GitPassword = ConfigurationManager.AppSettings["Git.Password"];
             project.GitUsername = ConfigurationManager.AppSettings["Git.Username"];
-            project.PathDEV = ConfigurationManager.AppSettings[$"Project.{project.Key}.DEV"];
-            project.PathLIVE = ConfigurationManager.AppSettings[$"Project.{project.Key}.LIVE"];
+            project.Path = ConfigurationManager.AppSettings[$"Project.{project.Key}"];
 
             // 2 - PULL LATEST
-            return project.Update() ? "Success" : "Failed";
+            return project.Update();
         }
 
         public class Project
         {
-            public string PathDEV { get; set; }
-            public string PathLIVE { get; set; }
+            public string Path { get; set; }
             public string Key { get; set; }
 
             public string GitEmail { get; set; }
             public string GitUsername { get; set; }
-            public string GitPassword { get; set; }
-            private UsernamePasswordCredentials GitCredentials { get; set; }
+            private new DefaultCredentials GitCredentials { get; set; }
 
-            public bool Update()
+            public string Update()
             {
                 try
                 {
-                    // git checkout live
-                    // git checkout dev
-                    // git fetch
-                    // git merge
-                    GitCredentials = new UsernamePasswordCredentials { Username = GitUsername, Password = GitPassword };
+                    GitCredentials = new DefaultCredentials(); 
 
-                    // Updated LIVE
-                    using (var repo = new Repository(PathLIVE))
+                    using (var repo = new Repository(Path))
                     {
                         var gitSignature = new Signature(GitUsername, GitEmail, DateTimeOffset.Now);
-
-                        // CHECKOUT
-                        Branch branch = Commands.Checkout(repo, repo.Branches["master"]);
 
                         // FETCH
                         Commands.Fetch(repo, "origin", new string[0], new FetchOptions { CredentialsProvider = (_url, _user, _cred) => GitCredentials, TagFetchMode = TagFetchMode.All }, null);
 
                         // MERGE
-                        MergeResult result = repo.Merge("master", gitSignature);
-                    }
-
-                    // Updated DEV
-                    using (var repo = new Repository(PathDEV))
-                    {
-                        var gitSignature = new Signature(GitUsername, GitEmail, DateTimeOffset.Now);
-
-                        // CHECKOUT
-                        Branch branch = Commands.Checkout(repo, repo.Branches["dev"]);
-
-                        // FETCH
-                        Commands.Fetch(repo, "origin", new string[0], new FetchOptions { CredentialsProvider = (_url, _user, _cred) => GitCredentials, TagFetchMode = TagFetchMode.All }, null);
-
-                        // MERGE
-                        MergeResult result = repo.Merge("dev", gitSignature);
+                        MergeResult result = repo.MergeFetchedRefs(gitSignature, new MergeOptions());
                     }
                 }
                 catch (Exception e)
                 {
-                    return false;
-                }
-                               
-                return true;
+                    return System.Web.HttpContext.Current.Request.IsLocal ? e.ToString() : "Failed";
+                }        
+                
+                return "Success";
             }
         }
     }
